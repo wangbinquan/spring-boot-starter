@@ -1,0 +1,4 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+org.wbq.spring.boot.autoconfigure.SparkAutoConfiguration,\
+org.wbq.spring.boot.autoconfigure.HadoopAutoConfiguration,\
+org.wbq.spring.boot.autoconfigure.HbaseAutoConfiguration
