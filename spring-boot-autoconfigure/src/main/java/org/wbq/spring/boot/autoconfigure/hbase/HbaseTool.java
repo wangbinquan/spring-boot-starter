@@ -18,5 +18,32 @@
 
 package org.wbq.spring.boot.autoconfigure.hbase;
 
-public class HbaseTool {
+import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
+import org.springframework.beans.factory.DisposableBean;
+
+import java.io.IOException;
+
+public class HbaseTool implements DisposableBean {
+    private Connection connection = null;
+
+
+    public HbaseTool(org.apache.hadoop.conf.Configuration configuration) throws IOException {
+        this.connection = ConnectionFactory.createConnection(configuration);
+    }
+
+    public Connection getConnection() {
+        return connection;
+    }
+
+    public Admin getAdmin() throws IOException {
+        return connection.getAdmin();
+    }
+
+    public void destroy() throws Exception {
+        if (this.connection != null && !this.connection.isClosed()) {
+            this.connection.close();
+        }
+    }
 }

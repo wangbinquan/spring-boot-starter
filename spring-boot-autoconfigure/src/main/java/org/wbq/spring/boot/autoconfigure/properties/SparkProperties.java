@@ -37,35 +37,33 @@ public class SparkProperties
         this.environment = environment;
     }
 
-    public String getMaster(){
+    public String getMaster() {
         RelaxedPropertyResolver resolver = new RelaxedPropertyResolver(
                 this.environment, SPARK_PREFIX);
         return resolver.getRequiredProperty("spark.master");
     }
 
-    public String getAppName(){
+    public String getAppName() {
         RelaxedPropertyResolver resolver = new RelaxedPropertyResolver(
                 this.environment, SPARK_PREFIX);
         String appName = resolver.getProperty("spark.app.name");
         return appName == null ? "spring-default-app-name" : appName;
     }
 
-    public Map<String, String> getOtherSparkConf(){
+    public Map<String, String> getOtherSparkConf() {
         RelaxedPropertyResolver resolver = new RelaxedPropertyResolver(
                 this.environment, SPARK_PREFIX);
         Map<String, Object> pro = resolver.getSubProperties(null);
         Map<String, String> fullProperities = new HashMap<String, String>();
-        for (Map.Entry<String, Object> entry : pro.entrySet()){
+        for (Map.Entry<String, Object> entry : pro.entrySet()) {
             String newKey = SPARK_PREFIX + entry.getKey();
             Object value = entry.getValue();
             String newValue = "";
-            if(value instanceof String){
+            if (value instanceof String) {
                 newValue = (String) value;
-            }
-            else if(value instanceof Class<?>){
+            } else if (value instanceof Class<?>) {
                 newValue = ((Class) value).getCanonicalName();
-            }
-            else {
+            } else {
                 newValue = value.toString();
             }
             fullProperities.put(newKey, newValue);

@@ -30,14 +30,14 @@ import org.wbq.spring.boot.autoconfigure.properties.HadoopProperities;
 import java.io.IOException;
 
 @Configuration
-@ConditionalOnClass({ FileSystem.class, org.apache.hadoop.conf.Configuration.class })
+@ConditionalOnClass({FileSystem.class, org.apache.hadoop.conf.Configuration.class})
 @EnableConfigurationProperties(HadoopProperities.class)
 public class HadoopAutoConfiguration {
-
+    private HdfsTool hdfsTool = null;
 
     @Bean
     @ConditionalOnMissingBean
-    public org.apache.hadoop.conf.Configuration configuration(HadoopProperities hadoopProperities){
+    public org.apache.hadoop.conf.Configuration configuration(HadoopProperities hadoopProperities) {
         org.apache.hadoop.conf.Configuration configuration = new org.apache.hadoop.conf.Configuration();
         hadoopProperities.loadDetectedConfiguration(configuration);
         return configuration;
@@ -45,7 +45,8 @@ public class HadoopAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public HdfsTool hadoopTools(org.apache.hadoop.conf.Configuration configuration, HadoopProperities hadoopProperities) throws IOException{
-        return new HdfsTool(configuration, hadoopProperities);
+    public HdfsTool hadoopTools(org.apache.hadoop.conf.Configuration configuration, HadoopProperities hadoopProperities) throws IOException {
+        this.hdfsTool = new HdfsTool(configuration, hadoopProperities);
+        return hdfsTool;
     }
 }

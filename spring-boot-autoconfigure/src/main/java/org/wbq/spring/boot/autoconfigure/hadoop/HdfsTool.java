@@ -18,14 +18,14 @@
 
 package org.wbq.spring.boot.autoconfigure.hadoop;
 
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.FileUtil;
-import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.*;
 import org.wbq.spring.boot.autoconfigure.properties.HadoopProperities;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 public class HdfsTool {
     private FileSystem fileSystem = null;
@@ -61,11 +61,11 @@ public class HdfsTool {
         return true;
     }
 
-    public boolean copyFileToHdfs(String srcDiskPath, String distHdfsPath) throws IOException{
+    public boolean copyFileToHdfs(String srcDiskPath, String distHdfsPath) throws IOException {
         return copyFileToHdfs(srcDiskPath, distHdfsPath, true, false);
     }
 
-    public boolean copyFileToHdfs(String srcDiskPath, String distHdfsPath, boolean overwriteIfExist, boolean delSrcFile) throws IOException{
+    public boolean copyFileToHdfs(String srcDiskPath, String distHdfsPath, boolean overwriteIfExist, boolean delSrcFile) throws IOException {
         return FileUtil.copy(
                 FileSystem.getLocal(fileSystem.getConf()),
                 new Path(srcDiskPath),
@@ -76,11 +76,11 @@ public class HdfsTool {
         );
     }
 
-    public boolean copyFileFromHdfs(String srcHdfsPath, String distDiskPath) throws IOException{
+    public boolean copyFileFromHdfs(String srcHdfsPath, String distDiskPath) throws IOException {
         return copyFileFromHdfs(srcHdfsPath, distDiskPath, true, false);
     }
 
-    public boolean copyFileFromHdfs(String srcHdfsPath, String distDiskPath, boolean overwriteIfExist, boolean delSrcFile) throws IOException{
+    public boolean copyFileFromHdfs(String srcHdfsPath, String distDiskPath, boolean overwriteIfExist, boolean delSrcFile) throws IOException {
         return FileUtil.copy(
                 fileSystem,
                 new Path(srcHdfsPath),
@@ -96,15 +96,13 @@ public class HdfsTool {
     }
 
     public OutputStream getHdfsFileOutputStream(String filePath, boolean appendOnExist) throws IOException {
-        if(appendOnExist) {
-            if(fileSystem.exists(new Path(filePath))){
+        if (appendOnExist) {
+            if (fileSystem.exists(new Path(filePath))) {
                 return fileSystem.append(new Path(filePath));
-            }
-            else {
+            } else {
                 return fileSystem.create(new Path(filePath), true);
             }
-        }
-        else {
+        } else {
             return fileSystem.create(new Path(filePath), true);
         }
     }
@@ -117,17 +115,27 @@ public class HdfsTool {
         return fileSystem.isFile(new Path(path));
     }
 
-    public boolean isDictionary(String path) throws IOException{
+    public boolean isDictionary(String path) throws IOException {
         return fileSystem.isDirectory(new Path(path));
     }
 
-    public boolean exist(String path) throws IOException{
+    public boolean exist(String path) throws IOException {
         return fileSystem.exists(new Path(path));
     }
 
+    public String[] getAllFileInDirctory(String path, boolean recursive) throws IOException {
+        RemoteIterator<LocatedFileStatus> fileIterator = fileSystem.listFiles(new Path(path), recursive);
+        List<String> fileOut = new ArrayList<String>();
+        while (fileIterator.hasNext()) {
+            LocatedFileStatus file = fileIterator.next();
+            fileOut.add(file.getPath().toString());
+        }
+        return fileOut.toArray(new String[fileOut.size()]);
+    }
 
     /**
      * Don't invoke the close() method;
+     *
      * @return fileSystem
      */
     public FileSystem getFileSystem() {

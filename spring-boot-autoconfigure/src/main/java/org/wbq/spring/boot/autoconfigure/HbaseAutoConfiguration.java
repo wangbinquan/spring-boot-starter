@@ -19,25 +19,63 @@
 package org.wbq.spring.boot.autoconfigure;
 
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.io.util.HeapMemorySizeUtil;
+import org.apache.hadoop.hbase.util.VersionInfo;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.util.Assert;
+import org.wbq.spring.boot.autoconfigure.hbase.HbaseTool;
 import org.wbq.spring.boot.autoconfigure.properties.HbaseProperties;
 
 import javax.annotation.PostConstruct;
+import java.io.IOException;
 
 @Configuration
-@ConditionalOnClass({ HBaseConfiguration.class })
+@ConditionalOnClass({HBaseConfiguration.class})
 @ConditionalOnProperty(prefix = "hbase.zookeeper", name = "quorum")
-@ConditionalOnBean({ org.apache.hadoop.conf.Configuration.class })
-@AutoConfigureAfter( {HadoopAutoConfiguration.class} )
+@ConditionalOnBean({org.apache.hadoop.conf.Configuration.class})
+@AutoConfigureAfter({HadoopAutoConfiguration.class})
 @EnableConfigurationProperties(HbaseProperties.class)
 public class HbaseAutoConfiguration {
-    @PostConstruct
-    private void applyZookeeper(HbaseProperties hbaseProperties, org.apache.hadoop.conf.Configuration configuration){
-        configuration.set("hbase.zookeeper.quorum", hbaseProperties.getZookeeperQuorum());
+
+    private org.apache.hadoop.conf.Configuration configuration = null;
+
+    private static void checkDefaultsVersion(org.apache.hadoop.conf.Configuration conf) {
+        if (conf.getBoolean("hbase.defaults.for.version.skip", Boolean.FALSE)) return;
+        String defaultsVersion = conf.get("hbase.defaults.for.version");
+        String thisVersion = VersionInfo.getVersion();
+        if (!thisVersion.equals(defaultsVersion)) {
+            throw new RuntimeException(
+                    "hbase-default.xml file seems to be for an older version of HBase (" +
+                            defaultsVersion + "), this version is " + thisVersion);
+        }
     }
+
+    @PostConstruct
+    private void applyZookeeper(HbaseProperties hbaseProperties, org.apache.hadoop.conf.Configuration configuration) {
+        configuration.setClassLoader(HBaseConfiguration.class.getClassLoader());
+        checkDefaultsVersion(configuration);
+        HeapMemorySizeUtil.checkForClusterFreeMemoryLimit(configuration);
+        if (configuration.get("hbase.zookeeper.quorum") == null) {
+            String zookeeperQuorum = hbaseProperties.getZookeeperQuorum();
+            Assert.isTrue(zookeeperQuorum != null, "hbase.zookeeper.quorum not found in properities");
+            configuration.set("hbase.zookeeper.quorum", hbaseProperties.getZookeeperQuorum());
+        }
+        this.configuration = configuration;
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    @ConditionalOnBean(org.apache.hadoop.conf.Configuration.class)
+    public HbaseTool hbaseTool() throws IOException {
+        return new HbaseTool(configuration);
+    }
+
+
 }

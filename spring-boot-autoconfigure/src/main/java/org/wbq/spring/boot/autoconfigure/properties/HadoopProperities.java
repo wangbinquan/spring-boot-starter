@@ -48,14 +48,12 @@ public class HadoopProperities
             File hadoopHomeDic = new File(hadoopHome);
             if (hadoopHomeDic.exists() && hadoopHomeDic.isDirectory()) {
                 File configPath = new File(hadoopHomeDic, "/etc/hadoop/");
-                if(configPath.exists() && configPath.isDirectory()){
+                if (configPath.exists() && configPath.isDirectory()) {
                     return configPath;
-                }
-                else {
+                } else {
                     return null;
                 }
-            }
-            else {
+            } else {
                 return null;
             }
         }
@@ -63,28 +61,34 @@ public class HadoopProperities
 
     private void loadFile(org.apache.hadoop.conf.Configuration configuration, File confPath, String fileName) {
         File propFile = new File(confPath, fileName);
-        if(propFile.exists() && propFile.isFile()){
+        if (propFile.exists() && propFile.isFile()) {
             try {
                 configuration.addResource(propFile.toURI().toURL());
-            }
-            catch (Exception e){
-                //do nothing...
+            } catch (Exception e) {
+                //search in classpath
+                configuration.addResource(fileName);
             }
         }
     }
 
-    public void loadDetectedConfiguration(org.apache.hadoop.conf.Configuration configuration){
+    public void loadDetectedConfiguration(org.apache.hadoop.conf.Configuration configuration) {
         File configureFilePath = configureFilePath();
-        if(configureFilePath != null){
+        if (configureFilePath != null) {
             loadFile(configuration, configureFilePath, "core-default.xml");
             loadFile(configuration, configureFilePath, "core-site.xml");
             loadFile(configuration, configureFilePath, "hdfs-default.xml");
             loadFile(configuration, configureFilePath, "hdfs-site.xml");
             loadFile(configuration, configureFilePath, "hadoop-site.xml");
+        } else {
+            configuration.addResource("core-default.xml");
+            configuration.addResource("core-site.xml");
+            configuration.addResource("hdfs-default.xml");
+            configuration.addResource("hdfs-site.xml");
+            configuration.addResource("hadoop-site.xml");
         }
     }
 
-    public String hadoopUri(){
+    public String hadoopUri() {
         RelaxedPropertyResolver resolver = new RelaxedPropertyResolver(
                 this.environment, HADOOP_PREFIX);
         return resolver.getProperty("uri");

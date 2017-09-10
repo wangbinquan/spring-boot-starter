@@ -21,6 +21,7 @@ package org.wbq.spring.boot.autoconfigure;
 import org.apache.spark.SparkConf;
 import org.apache.spark.SparkContext;
 import org.apache.spark.sql.SparkSession;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -35,7 +36,8 @@ import java.util.Map;
 @ConditionalOnClass({SparkContext.class, SparkSession.class})
 @ConditionalOnProperty(prefix = "spark", name = "master")
 @EnableConfigurationProperties(SparkProperties.class)
-public class SparkAutoConfiguration {
+public class SparkAutoConfiguration implements DisposableBean {
+    private SparkSession sparkSession = null;
 
     @Bean
     @ConditionalOnMissingBean
@@ -43,17 +45,22 @@ public class SparkAutoConfiguration {
         SparkConf sparkConf = new SparkConf();
         sparkConf.setMaster(sparkProperties.getMaster())
                 .setAppName(sparkProperties.getAppName());
-        for (Map.Entry<String, String> entry: sparkProperties.getOtherSparkConf().entrySet()){
+        for (Map.Entry<String, String> entry : sparkProperties.getOtherSparkConf().entrySet()) {
             sparkConf.set(entry.getKey(), entry.getValue());
         }
-        return SparkSession.builder()
+        this.sparkSession = SparkSession.builder()
                 .config(sparkConf)
                 .getOrCreate();
+        return sparkSession;
     }
 
     @Bean
     @ConditionalOnMissingBean
-    public SparkContext sparkContext(SparkSession sparkSession){
+    public SparkContext sparkContext(SparkSession sparkSession) {
         return sparkSession.sparkContext();
+    }
+
+    public void destroy() throws Exception {
+        sparkSession.close();
     }
 }
