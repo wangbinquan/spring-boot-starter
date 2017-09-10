@@ -18,18 +18,21 @@
 
 package org.wbq.spring.boot.autoconfigure.properties;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.boot.bind.RelaxedPropertyResolver;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.EnvironmentAware;
 import org.springframework.core.env.Environment;
 
 import java.io.File;
+import java.net.URL;
 
 @ConfigurationProperties(prefix = "hbase")
 public class HbaseProperties
         implements EnvironmentAware {
+    private Log LOG = LogFactory.getLog(getClass());
     private Environment environment;
-
     private final String HBASE_PREFIX = "hbase.";
 
     public void setEnvironment(Environment environment) {
@@ -39,7 +42,9 @@ public class HbaseProperties
     private String hbaseHome() {
         RelaxedPropertyResolver resolver = new RelaxedPropertyResolver(
                 this.environment, HBASE_PREFIX);
-        return resolver.getProperty("HBASE_HOME");
+        String hbaseHome = resolver.getProperty("HBASE_HOME");
+        LOG.info("Resolve HBASE_HOME at: [" + hbaseHome + "]");
+        return hbaseHome;
     }
 
     private File configureFilePath() {
@@ -50,6 +55,7 @@ public class HbaseProperties
             if (hbaseHomeDic.exists() && hbaseHomeDic.isDirectory()) {
                 File configPath = new File(hbaseHomeDic, "/conf/");
                 if (configPath.exists() && configPath.isDirectory()) {
+                    LOG.info("Hbase config directory exist: [" + configPath.getAbsolutePath() + "]");
                     return configPath;
                 } else {
                     return null;
@@ -64,7 +70,9 @@ public class HbaseProperties
         File propFile = new File(confPath, fileName);
         if (propFile.exists() && propFile.isFile()) {
             try {
-                configuration.addResource(propFile.toURI().toURL());
+                URL uri = propFile.toURI().toURL();
+                configuration.addResource(uri);
+                LOG.info("Set hbase properities file: [" + uri.toString() + "]");
             } catch (Exception e) {
                 //search in classpath
                 configuration.addResource(fileName);
@@ -86,6 +94,8 @@ public class HbaseProperties
     public String getZookeeperQuorum() {
         RelaxedPropertyResolver resolver = new RelaxedPropertyResolver(
                 this.environment, HBASE_PREFIX);
-        return resolver.getRequiredProperty("hbase.zookeeper.quorum");
+        String zookeeperQuorum = resolver.getRequiredProperty("hbase.zookeeper.quorum");
+        LOG.info("Resolve hbase.zookeeper.quorum = [" + zookeeperQuorum + "] in spring properities");
+        return zookeeperQuorum;
     }
 }

@@ -18,6 +18,8 @@
 
 package org.wbq.spring.boot.autoconfigure.hbase;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
@@ -28,8 +30,8 @@ import java.io.IOException;
 import java.util.Map;
 
 public class HbaseTool {
+    private Log LOG = LogFactory.getLog(getClass());
     private org.apache.hadoop.conf.Configuration configuration = null;
-
 
     public HbaseTool(org.apache.hadoop.conf.Configuration configuration) throws IOException {
         this.configuration = configuration;

@@ -18,6 +18,8 @@
 
 package org.wbq.spring.boot.autoconfigure;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.io.util.HeapMemorySizeUtil;
 import org.apache.hadoop.hbase.util.VersionInfo;
@@ -43,7 +45,7 @@ import java.io.IOException;
 @AutoConfigureAfter({HadoopAutoConfiguration.class})
 @EnableConfigurationProperties(HbaseProperties.class)
 public class HbaseAutoConfiguration {
-
+    private Log LOG = LogFactory.getLog(getClass());
     private org.apache.hadoop.conf.Configuration configuration = null;
 
     private static void checkDefaultsVersion(org.apache.hadoop.conf.Configuration conf) {
@@ -65,7 +67,8 @@ public class HbaseAutoConfiguration {
         if (configuration.get("hbase.zookeeper.quorum") == null) {
             String zookeeperQuorum = hbaseProperties.getZookeeperQuorum();
             Assert.isTrue(zookeeperQuorum != null, "hbase.zookeeper.quorum not found in properities");
-            configuration.set("hbase.zookeeper.quorum", hbaseProperties.getZookeeperQuorum());
+            configuration.set("hbase.zookeeper.quorum", zookeeperQuorum);
+            LOG.info("Set hbase configuration hbase.zookeeper.quorum = [" + zookeeperQuorum + "]");
         }
         this.configuration = configuration;
     }
@@ -74,6 +77,7 @@ public class HbaseAutoConfiguration {
     @ConditionalOnMissingBean
     @ConditionalOnBean(org.apache.hadoop.conf.Configuration.class)
     public HbaseTool hbaseTool() throws IOException {
+        LOG.info("Gen HbaseTool class");
         return new HbaseTool(configuration);
     }
 

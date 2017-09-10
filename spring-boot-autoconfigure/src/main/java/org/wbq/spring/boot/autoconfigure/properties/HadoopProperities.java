@@ -18,16 +18,21 @@
 
 package org.wbq.spring.boot.autoconfigure.properties;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.boot.bind.RelaxedPropertyResolver;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.EnvironmentAware;
 import org.springframework.core.env.Environment;
 
 import java.io.File;
+import java.net.URI;
+import java.net.URL;
 
 @ConfigurationProperties(prefix = "hadoop")
 public class HadoopProperities
         implements EnvironmentAware {
+    private Log LOG = LogFactory.getLog(getClass());
     private Environment environment;
     private final String HADOOP_PREFIX = "hadoop.";
 
@@ -38,7 +43,9 @@ public class HadoopProperities
     private String hadoopHome() {
         RelaxedPropertyResolver resolver = new RelaxedPropertyResolver(
                 this.environment, HADOOP_PREFIX);
-        return resolver.getProperty("HADOOP_HOME");
+        String hadoopHome = resolver.getProperty("HADOOP_HOME");
+        LOG.info("Resolve HADOOP_HOME at: [" + hadoopHome + "]");
+        return hadoopHome;
     }
 
     private File configureFilePath() {
@@ -49,6 +56,7 @@ public class HadoopProperities
             if (hadoopHomeDic.exists() && hadoopHomeDic.isDirectory()) {
                 File configPath = new File(hadoopHomeDic, "/etc/hadoop/");
                 if (configPath.exists() && configPath.isDirectory()) {
+                    LOG.info("Hadoop config directory exist: [" + configPath.getAbsolutePath() + "]");
                     return configPath;
                 } else {
                     return null;
@@ -63,7 +71,9 @@ public class HadoopProperities
         File propFile = new File(confPath, fileName);
         if (propFile.exists() && propFile.isFile()) {
             try {
-                configuration.addResource(propFile.toURI().toURL());
+                URL uri = propFile.toURI().toURL();
+                configuration.addResource(uri);
+                LOG.info("Set hadoop properities file: [" + uri.toString() + "]");
             } catch (Exception e) {
                 //search in classpath
                 configuration.addResource(fileName);
@@ -88,9 +98,11 @@ public class HadoopProperities
         }
     }
 
-    public String hadoopUri() {
+    public String hadoopHdfsUri() {
         RelaxedPropertyResolver resolver = new RelaxedPropertyResolver(
                 this.environment, HADOOP_PREFIX);
-        return resolver.getProperty("uri");
+        String hdfsUri = resolver.getProperty("hdfs.uri");
+        LOG.info("Resolve hadoop.hdfs.uri = [" + hdfsUri + "] in spring properities");
+        return hdfsUri;
     }
 }

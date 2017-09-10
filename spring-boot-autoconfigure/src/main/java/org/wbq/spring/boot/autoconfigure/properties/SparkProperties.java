@@ -18,6 +18,8 @@
 
 package org.wbq.spring.boot.autoconfigure.properties;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.boot.bind.RelaxedPropertyResolver;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.EnvironmentAware;
@@ -29,8 +31,8 @@ import java.util.Map;
 @ConfigurationProperties(prefix = "spark")
 public class SparkProperties
         implements EnvironmentAware {
+    private Log LOG = LogFactory.getLog(getClass());
     private Environment environment;
-
     private final String SPARK_PREFIX = "spark.";
 
     public void setEnvironment(Environment environment) {
@@ -40,14 +42,18 @@ public class SparkProperties
     public String getMaster() {
         RelaxedPropertyResolver resolver = new RelaxedPropertyResolver(
                 this.environment, SPARK_PREFIX);
-        return resolver.getRequiredProperty("spark.master");
+        String sparkMaster = resolver.getRequiredProperty("spark.master");
+        LOG.info("Resolve spark.master = [" + sparkMaster + "]");
+        return sparkMaster;
     }
 
     public String getAppName() {
         RelaxedPropertyResolver resolver = new RelaxedPropertyResolver(
                 this.environment, SPARK_PREFIX);
         String appName = resolver.getProperty("spark.app.name");
-        return appName == null ? "spring-default-app-name" : appName;
+        String finalAppName = appName == null ? "spring-default-app-name" : appName;
+        LOG.info("Resolve spark.app.name = [" + finalAppName + "]");
+        return finalAppName;
     }
 
     public Map<String, String> getOtherSparkConf() {
@@ -57,6 +63,9 @@ public class SparkProperties
         Map<String, String> fullProperities = new HashMap<String, String>();
         for (Map.Entry<String, Object> entry : pro.entrySet()) {
             String newKey = SPARK_PREFIX + entry.getKey();
+            if(newKey == "spark.master" || newKey == "spark.app.name"){
+                continue;
+            }
             Object value = entry.getValue();
             String newValue = "";
             if (value instanceof String) {
@@ -67,6 +76,20 @@ public class SparkProperties
                 newValue = value.toString();
             }
             fullProperities.put(newKey, newValue);
+        }
+        if(LOG.isInfoEnabled()) {
+            if(fullProperities.isEmpty()){
+                LOG.info("No spark properities resolved");
+            }
+            else {
+                StringBuffer sb = new StringBuffer();
+                sb.append("Resolve spark properities: [\n");
+                for (Map.Entry<String, String> entry : fullProperities.entrySet()) {
+                    sb.append("(" + entry.getKey() + " \t " + entry.getValue() + ")\n");
+                }
+                sb.append("]");
+                LOG.info(sb.toString());
+            }
         }
         return fullProperities;
     }

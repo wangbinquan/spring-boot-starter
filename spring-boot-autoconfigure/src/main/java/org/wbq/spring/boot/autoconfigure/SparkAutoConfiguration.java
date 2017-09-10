@@ -18,6 +18,8 @@
 
 package org.wbq.spring.boot.autoconfigure;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.spark.SparkConf;
 import org.apache.spark.SparkContext;
 import org.apache.spark.sql.SparkSession;
@@ -37,11 +39,13 @@ import java.util.Map;
 @ConditionalOnProperty(prefix = "spark", name = "master")
 @EnableConfigurationProperties(SparkProperties.class)
 public class SparkAutoConfiguration implements DisposableBean {
+    private Log LOG = LogFactory.getLog(getClass());
     private SparkSession sparkSession = null;
 
     @Bean
     @ConditionalOnMissingBean
     public SparkSession sparkSession(SparkProperties sparkProperties) {
+        LOG.info("Create sparkSession begin");
         SparkConf sparkConf = new SparkConf();
         sparkConf.setMaster(sparkProperties.getMaster())
                 .setAppName(sparkProperties.getAppName());
@@ -51,6 +55,7 @@ public class SparkAutoConfiguration implements DisposableBean {
         this.sparkSession = SparkSession.builder()
                 .config(sparkConf)
                 .getOrCreate();
+        LOG.info("Create sparkSession end");
         return sparkSession;
     }
 

@@ -18,6 +18,8 @@
 
 package org.wbq.spring.boot.autoconfigure.hadoop;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.*;
 import org.wbq.spring.boot.autoconfigure.properties.HadoopProperities;
 
@@ -28,11 +30,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class HdfsTool {
+    private Log LOG = LogFactory.getLog(getClass());
     private FileSystem fileSystem = null;
 
-    public HdfsTool(org.apache.hadoop.conf.Configuration configuration, HadoopProperities hadoopProperities) throws IOException {
+    public HdfsTool(org.apache.hadoop.conf.Configuration configuration,
+                    HadoopProperities hadoopProperities) throws IOException {
         String hadoopURI = "";
-        String uri = hadoopProperities.hadoopUri();
+        String uri = hadoopProperities.hadoopHdfsUri();
         if (uri != null && uri.trim().startsWith("hdfs://")) {
             hadoopURI = uri.trim();
             if (!(uri.trim().endsWith("/"))) {
@@ -41,7 +45,12 @@ public class HdfsTool {
         }
         if (!hadoopURI.equals("")) {
             configuration.set(FileSystem.FS_DEFAULT_NAME_KEY, hadoopURI);
+            LOG.info("Set " + FileSystem.FS_DEFAULT_NAME_KEY +
+                    " = [" + hadoopURI + "] to configuration");
         }
+        LOG.info("Create fileSystem end, the " +
+                FileSystem.FS_DEFAULT_NAME_KEY +
+                " = [" + configuration.get(FileSystem.FS_DEFAULT_NAME_KEY) + "]");
         this.fileSystem = FileSystem.get(configuration);
     }
 
@@ -65,7 +74,10 @@ public class HdfsTool {
         return copyFileToHdfs(srcDiskPath, distHdfsPath, true, false);
     }
 
-    public boolean copyFileToHdfs(String srcDiskPath, String distHdfsPath, boolean overwriteIfExist, boolean delSrcFile) throws IOException {
+    public boolean copyFileToHdfs(String srcDiskPath,
+                                  String distHdfsPath,
+                                  boolean overwriteIfExist,
+                                  boolean delSrcFile) throws IOException {
         return FileUtil.copy(
                 FileSystem.getLocal(fileSystem.getConf()),
                 new Path(srcDiskPath),
@@ -80,7 +92,10 @@ public class HdfsTool {
         return copyFileFromHdfs(srcHdfsPath, distDiskPath, true, false);
     }
 
-    public boolean copyFileFromHdfs(String srcHdfsPath, String distDiskPath, boolean overwriteIfExist, boolean delSrcFile) throws IOException {
+    public boolean copyFileFromHdfs(String srcHdfsPath,
+                                    String distDiskPath,
+                                    boolean overwriteIfExist,
+                                    boolean delSrcFile) throws IOException {
         return FileUtil.copy(
                 fileSystem,
                 new Path(srcHdfsPath),
@@ -139,6 +154,7 @@ public class HdfsTool {
      * @return fileSystem
      */
     public FileSystem getFileSystem() {
+        LOG.info("Destory fileSystem");
         return fileSystem;
     }
 }
