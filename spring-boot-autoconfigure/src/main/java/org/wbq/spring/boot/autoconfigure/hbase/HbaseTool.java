@@ -18,32 +18,119 @@
 
 package org.wbq.spring.boot.autoconfigure.hbase;
 
-import org.apache.hadoop.hbase.client.Admin;
-import org.apache.hadoop.hbase.client.Connection;
-import org.apache.hadoop.hbase.client.ConnectionFactory;
-import org.springframework.beans.factory.DisposableBean;
+import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
+import java.util.Map;
 
-public class HbaseTool implements DisposableBean {
-    private Connection connection = null;
+public class HbaseTool {
+    private org.apache.hadoop.conf.Configuration configuration = null;
 
 
     public HbaseTool(org.apache.hadoop.conf.Configuration configuration) throws IOException {
-        this.connection = ConnectionFactory.createConnection(configuration);
+        this.configuration = configuration;
     }
 
-    public Connection getConnection() {
-        return connection;
+    public boolean tableExist(String tableName) throws IOException {
+        Admin admin = getAdmin();
+        boolean flag = admin.tableExists(TableName.valueOf(tableName));
+        admin.close();
+        return flag;
+    }
+
+    public boolean createTable(String tableName, String[] columnFamily, boolean rebuildTableIfExist) throws IOException {
+        Admin admin = getAdmin();
+        if (admin.tableExists(TableName.valueOf(tableName))) {
+            if (rebuildTableIfExist) {
+                admin.deleteTable(TableName.valueOf(tableName));
+            } else {
+                return false;
+            }
+        }
+        HTableDescriptor tableDescriptor = new HTableDescriptor(TableName.valueOf(tableName));
+        for (String colFamily : columnFamily) {
+            tableDescriptor.addFamily(new HColumnDescriptor(colFamily));
+        }
+        admin.createTable(tableDescriptor);
+        admin.close();
+        return true;
+    }
+
+    public boolean createColumnFamily(String tableName, String[] columnFamily) throws IOException {
+        Admin admin = getAdmin();
+        if (!admin.tableExists(TableName.valueOf(tableName))) {
+            return false;
+        }
+        admin.disableTable(TableName.valueOf(tableName));
+        HTableDescriptor tableDescriptor = admin.getTableDescriptor(TableName.valueOf(tableName));
+        for (String colFamily : columnFamily) {
+            tableDescriptor.addFamily(new HColumnDescriptor(colFamily));
+        }
+        admin.disableTable(TableName.valueOf(tableName));
+        admin.modifyTable(TableName.valueOf(tableName), tableDescriptor);
+        admin.enableTable(TableName.valueOf(tableName));
+        admin.close();
+        return true;
+    }
+
+    public boolean insert(String tableName, String columnFamily, byte[] key, Map<byte[], byte[]> columnValue) throws IOException {
+        Admin admin = getAdmin();
+        if (!admin.tableExists(TableName.valueOf(tableName))) {
+            return false;
+        }
+        byte[] columnFamilyBytes = Bytes.toBytes(columnFamily);
+        Put put = new Put(key);
+        for (Map.Entry<byte[], byte[]> column : columnValue.entrySet()) {
+            put.addColumn(columnFamilyBytes, column.getKey(), column.getValue());
+        }
+        Table table = admin.getConnection().getTable(TableName.valueOf(tableName));
+        table.put(put);
+        table.close();
+        return true;
+    }
+
+    public byte[][] get(String tableName, String columnFamily, byte[] key, byte[][] columnsToSearch) throws IOException {
+        Admin admin = getAdmin();
+        if (!admin.tableExists(TableName.valueOf(tableName))) {
+            return null;
+        }
+        Table table = admin.getConnection().getTable(TableName.valueOf(tableName));
+        Get get = new Get(key);
+        byte[] columnFamilyBytes = Bytes.toBytes(columnFamily);
+        Result result = table.get(get);
+        byte[][] results = new byte[columnsToSearch.length][];
+        for (int i = 0; i < columnsToSearch.length; i++) {
+            results[i] = result.getValue(columnFamilyBytes, columnsToSearch[i]);
+        }
+        table.close();
+        return results;
+    }
+
+    public boolean delete(String tableName, String columnFamily, byte[] key) throws IOException {
+        Admin admin = getAdmin();
+        if (!admin.tableExists(TableName.valueOf(tableName))) {
+            return false;
+        }
+        Delete delete = new Delete(key);
+        if(columnFamily != null && columnFamily != "") {
+            delete.addFamily(Bytes.toBytes(columnFamily));
+        }
+        Table table = admin.getConnection().getTable(TableName.valueOf(tableName));
+        table.delete(delete);
+        table.close();
+        return true;
+    }
+
+
+    public Connection getConnection() throws IOException {
+        return ConnectionFactory.createConnection(configuration);
     }
 
     public Admin getAdmin() throws IOException {
-        return connection.getAdmin();
-    }
-
-    public void destroy() throws Exception {
-        if (this.connection != null && !this.connection.isClosed()) {
-            this.connection.close();
-        }
+        return getConnection().getAdmin();
     }
 }
