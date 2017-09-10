@@ -38,11 +38,15 @@ public class SparkProperties
     }
 
     public String getMaster(){
-        return environment.getRequiredProperty("spark.master");
+        RelaxedPropertyResolver resolver = new RelaxedPropertyResolver(
+                this.environment, SPARK_PREFIX);
+        return resolver.getRequiredProperty("spark.master");
     }
 
     public String getAppName(){
-        String appName = environment.getProperty("spark.app.name");
+        RelaxedPropertyResolver resolver = new RelaxedPropertyResolver(
+                this.environment, SPARK_PREFIX);
+        String appName = resolver.getProperty("spark.app.name");
         return appName == null ? "spring-default-app-name" : appName;
     }
 

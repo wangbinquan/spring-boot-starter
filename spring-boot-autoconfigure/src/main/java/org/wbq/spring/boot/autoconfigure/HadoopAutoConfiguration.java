@@ -20,12 +20,32 @@ package org.wbq.spring.boot.autoconfigure;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.wbq.spring.boot.autoconfigure.hadoop.HdfsTool;
 import org.wbq.spring.boot.autoconfigure.properties.HadoopProperities;
 
+import java.io.IOException;
+
 @Configuration
-@ConditionalOnClass({ FileSystem.class })
+@ConditionalOnClass({ FileSystem.class, org.apache.hadoop.conf.Configuration.class })
 @EnableConfigurationProperties(HadoopProperities.class)
 public class HadoopAutoConfiguration {
+
+
+    @Bean
+    @ConditionalOnMissingBean
+    public org.apache.hadoop.conf.Configuration configuration(HadoopProperities hadoopProperities){
+        org.apache.hadoop.conf.Configuration configuration = new org.apache.hadoop.conf.Configuration();
+        hadoopProperities.loadDetectedConfiguration(configuration);
+        return configuration;
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public HdfsTool hadoopTools(org.apache.hadoop.conf.Configuration configuration, HadoopProperities hadoopProperities) throws IOException{
+        return new HdfsTool(configuration, hadoopProperities);
+    }
 }
