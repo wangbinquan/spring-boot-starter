@@ -109,9 +109,22 @@ public class HdfsTool {
         }
     }
 
-    public boolean deleteHdfsFile(String filePath, boolean deleteIfDictionary) throws IOException {
-        return fileSystem.delete(new Path(filePath), deleteIfDictionary);
+    public boolean deleteHdfsFile(String filePath, boolean deleteIfDirectory) throws IOException {
+        return fileSystem.delete(new Path(filePath), deleteIfDirectory);
     }
+
+    public boolean isFile(String path) throws IOException {
+        return fileSystem.isFile(new Path(path));
+    }
+
+    public boolean isDictionary(String path) throws IOException{
+        return fileSystem.isDirectory(new Path(path));
+    }
+
+    public boolean exist(String path) throws IOException{
+        return fileSystem.exists(new Path(path));
+    }
+
 
     /**
      * Don't invoke the close() method;
