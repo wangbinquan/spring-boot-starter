@@ -42,7 +42,7 @@ public class SparkProperties
     public String getMaster() {
         RelaxedPropertyResolver resolver = new RelaxedPropertyResolver(
                 this.environment, SPARK_PREFIX);
-        String sparkMaster = resolver.getRequiredProperty("spark.master");
+        String sparkMaster = resolver.getRequiredProperty("master");
         LOG.info("Resolve spark.master = [" + sparkMaster + "]");
         return sparkMaster;
     }
@@ -50,7 +50,7 @@ public class SparkProperties
     public String getAppName() {
         RelaxedPropertyResolver resolver = new RelaxedPropertyResolver(
                 this.environment, SPARK_PREFIX);
-        String appName = resolver.getProperty("spark.app.name");
+        String appName = resolver.getProperty("app.name");
         String finalAppName = appName == null ? "spring-default-app-name" : appName;
         LOG.info("Resolve spark.app.name = [" + finalAppName + "]");
         return finalAppName;
@@ -63,7 +63,7 @@ public class SparkProperties
         Map<String, String> fullProperities = new HashMap<String, String>();
         for (Map.Entry<String, Object> entry : pro.entrySet()) {
             String newKey = SPARK_PREFIX + entry.getKey();
-            if(newKey == "spark.master" || newKey == "spark.app.name"){
+            if(newKey.equals("spark.master") || newKey.equals("spark.app.name")){
                 continue;
             }
             Object value = entry.getValue();

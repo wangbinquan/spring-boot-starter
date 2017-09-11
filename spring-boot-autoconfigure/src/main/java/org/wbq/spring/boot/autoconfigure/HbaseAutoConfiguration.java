@@ -48,6 +48,19 @@ public class HbaseAutoConfiguration {
     private Log LOG = LogFactory.getLog(getClass());
     private org.apache.hadoop.conf.Configuration configuration = null;
 
+    public HbaseAutoConfiguration(HbaseProperties hbaseProperties, org.apache.hadoop.conf.Configuration configuration) {
+        configuration.setClassLoader(HBaseConfiguration.class.getClassLoader());
+//        checkDefaultsVersion(configuration);
+        HeapMemorySizeUtil.checkForClusterFreeMemoryLimit(configuration);
+        if (configuration.get("hbase.zookeeper.quorum") == null) {
+            String zookeeperQuorum = hbaseProperties.getZookeeperQuorum();
+            Assert.isTrue(zookeeperQuorum != null, "hbase.zookeeper.quorum not found in properities");
+            configuration.set("hbase.zookeeper.quorum", zookeeperQuorum);
+            LOG.info("Set hbase configuration hbase.zookeeper.quorum = [" + zookeeperQuorum + "]");
+        }
+        this.configuration = configuration;
+    }
+
     private static void checkDefaultsVersion(org.apache.hadoop.conf.Configuration conf) {
         if (conf.getBoolean("hbase.defaults.for.version.skip", Boolean.FALSE)) return;
         String defaultsVersion = conf.get("hbase.defaults.for.version");
@@ -57,20 +70,6 @@ public class HbaseAutoConfiguration {
                     "hbase-default.xml file seems to be for an older version of HBase (" +
                             defaultsVersion + "), this version is " + thisVersion);
         }
-    }
-
-    @PostConstruct
-    private void applyZookeeper(HbaseProperties hbaseProperties, org.apache.hadoop.conf.Configuration configuration) {
-        configuration.setClassLoader(HBaseConfiguration.class.getClassLoader());
-        checkDefaultsVersion(configuration);
-        HeapMemorySizeUtil.checkForClusterFreeMemoryLimit(configuration);
-        if (configuration.get("hbase.zookeeper.quorum") == null) {
-            String zookeeperQuorum = hbaseProperties.getZookeeperQuorum();
-            Assert.isTrue(zookeeperQuorum != null, "hbase.zookeeper.quorum not found in properities");
-            configuration.set("hbase.zookeeper.quorum", zookeeperQuorum);
-            LOG.info("Set hbase configuration hbase.zookeeper.quorum = [" + zookeeperQuorum + "]");
-        }
-        this.configuration = configuration;
     }
 
     @Bean

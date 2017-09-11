@@ -48,6 +48,7 @@ public class HbaseTool {
         Admin admin = getAdmin();
         if (admin.tableExists(TableName.valueOf(tableName))) {
             if (rebuildTableIfExist) {
+                admin.disableTable(TableName.valueOf(tableName));
                 admin.deleteTable(TableName.valueOf(tableName));
             } else {
                 return false;

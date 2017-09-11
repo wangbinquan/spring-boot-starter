@@ -94,7 +94,7 @@ public class HbaseProperties
     public String getZookeeperQuorum() {
         RelaxedPropertyResolver resolver = new RelaxedPropertyResolver(
                 this.environment, HBASE_PREFIX);
-        String zookeeperQuorum = resolver.getRequiredProperty("hbase.zookeeper.quorum");
+        String zookeeperQuorum = resolver.getRequiredProperty("zookeeper.quorum");
         LOG.info("Resolve hbase.zookeeper.quorum = [" + zookeeperQuorum + "] in spring properities");
         return zookeeperQuorum;
     }
