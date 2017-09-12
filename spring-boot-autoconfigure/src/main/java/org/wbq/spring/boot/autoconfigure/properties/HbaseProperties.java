@@ -40,9 +40,7 @@ public class HbaseProperties
     }
 
     private String hbaseHome() {
-        RelaxedPropertyResolver resolver = new RelaxedPropertyResolver(
-                this.environment, HBASE_PREFIX);
-        String hbaseHome = resolver.getProperty("HBASE_HOME");
+        String hbaseHome = environment.getProperty("HBASE_HOME");
         LOG.info("Resolve HBASE_HOME at: [" + hbaseHome + "]");
         return hbaseHome;
     }

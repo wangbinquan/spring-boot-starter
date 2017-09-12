@@ -41,9 +41,7 @@ public class HadoopProperities
     }
 
     private String hadoopHome() {
-        RelaxedPropertyResolver resolver = new RelaxedPropertyResolver(
-                this.environment, HADOOP_PREFIX);
-        String hadoopHome = resolver.getProperty("HADOOP_HOME");
+        String hadoopHome = environment.getProperty("HADOOP_HOME");
         LOG.info("Resolve HADOOP_HOME at: [" + hadoopHome + "]");
         return hadoopHome;
     }
