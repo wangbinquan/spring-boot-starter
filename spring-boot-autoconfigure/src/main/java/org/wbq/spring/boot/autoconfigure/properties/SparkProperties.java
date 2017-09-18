@@ -39,6 +39,14 @@ public class SparkProperties
         this.environment = environment;
     }
 
+    public String getSparkGeneratorType() {
+        RelaxedPropertyResolver resolver = new RelaxedPropertyResolver(
+                this.environment, "");
+        String sparkGeneratorType = resolver.getRequiredProperty("generator.spark.type");
+        LOG.info("Resolve generator.spark.type = [" + sparkGeneratorType + "]");
+        return sparkGeneratorType;
+    }
+
     public String getMaster() {
         RelaxedPropertyResolver resolver = new RelaxedPropertyResolver(
                 this.environment, SPARK_PREFIX);

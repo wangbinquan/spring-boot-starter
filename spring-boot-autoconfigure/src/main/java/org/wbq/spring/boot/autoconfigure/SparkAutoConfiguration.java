@@ -31,6 +31,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.wbq.spring.boot.autoconfigure.properties.SparkProperties;
+import org.wbq.spring.boot.autoconfigure.spark.SparkFactory;
 
 import java.util.Map;
 
@@ -41,6 +42,12 @@ import java.util.Map;
 public class SparkAutoConfiguration implements DisposableBean {
     private Log LOG = LogFactory.getLog(getClass());
     private SparkSession sparkSession = null;
+
+    @Bean
+    @ConditionalOnMissingBean
+    public SparkFactory sparkFactory(SparkProperties sparkProperties) {
+        return new SparkFactory(sparkProperties);
+    }
 
     @Bean
     @ConditionalOnMissingBean
